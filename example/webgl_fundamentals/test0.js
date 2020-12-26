@@ -50,7 +50,11 @@ function main () {
   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0)
 
   // draw
-  gl.drawArrays(gl.TRIANGLES, 0, 6)
+  for (var i = 0; i < 1000; ++i) {
+    console.time('RENDER')
+    gl.drawArrays(gl.TRIANGLES, 0, 6)
+    console.timeEnd('RENDER')
+  }
 
   var filename = __filename + '.ppm' // eslint-disable-line
   log.info(__line, 'rendering ' + filename)

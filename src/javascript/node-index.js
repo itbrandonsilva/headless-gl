@@ -24,7 +24,8 @@ function createContext (width, height, options) {
     flag(options, 'alpha', true),
     flag(options, 'depth', true),
     flag(options, 'stencil', false),
-    false, // flag(options, 'antialias', true),
+    //false, // flag(options, 'antialias', true),
+    flag(options, 'antialias', true),
     flag(options, 'premultipliedAlpha', true),
     flag(options, 'preserveDrawingBuffer', false),
     flag(options, 'preferLowPowerToHighPerformance', false),
@@ -33,6 +34,8 @@ function createContext (width, height, options) {
   // Can only use premultipliedAlpha if alpha is set
   contextAttributes.premultipliedAlpha =
     contextAttributes.premultipliedAlpha && contextAttributes.alpha
+ 
+  console.log(contextAttributes);
 
   let ctx
   try {

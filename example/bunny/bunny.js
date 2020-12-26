@@ -27,7 +27,7 @@ function main () {
   // Create context
   var width = 512
   var height = 512
-  var gl = createContext(width, height)
+  var gl = createContext(width, height, {antialias: true});
 
   gl.clearColor(0.0, 0.0, 0.0, 1.0)
   gl.enable(gl.DEPTH_TEST)
@@ -99,7 +99,11 @@ function main () {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementsBuffer)
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(flatten(bunny.cells)), gl.STATIC_DRAW)
 
+	for (var i = 0; i < 100; ++i) {
+		console.time('REND');
   gl.drawElements(gl.TRIANGLES, bunny.cells.length * 3, gl.UNSIGNED_SHORT, 0)
+		console.timeEnd('REND');
+	}
 
   var filename = __filename + '.ppm' // eslint-disable-line
   log.info(__line, 'rendering ' + filename)

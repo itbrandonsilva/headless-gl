@@ -20,6 +20,7 @@
     "bindings": "^1.5.0",
     "bit-twiddle": "^1.0.2",
     "glsl-tokenizer": "^2.0.2",
+    "log4js": "^6.3.0",
     "nan": "^2.14.1",
     "node-abi": "^2.18.0",
     "node-gyp": "^7.1.0",

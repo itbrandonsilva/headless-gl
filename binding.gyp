@@ -19,12 +19,12 @@
       ],
       'include_dirs': [
         "<!(node -e \"require('nan')\")",
-        '<(module_root_dir)/deps/include',
-        "angle/include"
+        # '<(module_root_dir)/deps/include',
+        # "angle/include"
       ],
-      'library_dirs': [
-        '<(module_root_dir)/deps/<(platform)'
-      ],
+      #'library_dirs': [
+      #  '<(module_root_dir)/deps/<(platform)'
+      #],
       'conditions': [
         ['OS=="mac"', {
             'dependencies':
@@ -46,10 +46,14 @@
             },
         }],
         ['OS=="linux"', {
-            'dependencies':
+            #'dependencies':
+            'libraries':
             [
-              'angle/src/angle.gyp:libEGL',
-              'angle/src/angle.gyp:libGLESv2'
+              #'angle/src/angle.gyp:libEGL',
+              #'angle/src/angle.gyp:libGLESv2'
+              #'-L/usr/lib/x86_64-linux-gnu'
+              "-lEGL",
+              "-lGLESv2"
             ]
         }],
         ['OS=="win"', {

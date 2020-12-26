@@ -1,6 +1,7 @@
 #include <cstring>
 #include <vector>
 #include <iostream>
+#include <stdio.h>
 
 #include "webgl.h"
 
@@ -11,9 +12,9 @@ WebGLRenderingContext* WebGLRenderingContext::CONTEXT_LIST_HEAD = NULL;
 
 const char* REQUIRED_EXTENSIONS[] = {
   "GL_OES_packed_depth_stencil",
-  "GL_ANGLE_instanced_arrays",
   NULL
 };
+  //"GL_ANGLE_instanced_arrays",
 
 #define GL_METHOD(method_name) NAN_METHOD(WebGLRenderingContext:: method_name)
 
@@ -52,18 +53,38 @@ WebGLRenderingContext::WebGLRenderingContext(
   if (!HAS_DISPLAY) {
     DISPLAY = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (DISPLAY == EGL_NO_DISPLAY) {
+      printf("Failed to get display.");
       state = GLCONTEXT_STATE_ERROR;
       return;
     }
 
     //Initialize EGL
     if (!eglInitialize(DISPLAY, NULL, NULL)) {
+      switch (eglGetError()) {
+        case EGL_FALSE:
+          printf("Failed to initialize. EGL_FALSE");
+          break;
+        case EGL_BAD_DISPLAY:
+          printf("Failed to initialize. EGL_BAD_DISPLAY");
+          break;
+        case EGL_NOT_INITIALIZED:
+          printf("Failed to initialize. EGL_NOT_INITIALIZED");
+          break;
+      }
+
       state = GLCONTEXT_STATE_ERROR;
       return;
     }
 
     //Save display
     HAS_DISPLAY = true;
+
+    char const * vendor = eglQueryString(DISPLAY, EGL_VENDOR);
+    if (vendor) {
+      printf("headless-gl ?? EGL_VENDOR = %s\n", vendor);
+    } else {
+      printf("headless-gl ?? EGL_VENDOR = UNKNOWN");
+    }
   }
 
   //Set up configuration
@@ -75,6 +96,8 @@ WebGLRenderingContext::WebGLRenderingContext(
     , EGL_ALPHA_SIZE,   8
     , EGL_DEPTH_SIZE,   24
     , EGL_STENCIL_SIZE, 8
+    //, EGL_SAMPLE_BUFFERS, 1
+    //, EGL_SAMPLES, 8
     , EGL_NONE
   };
   EGLint num_config;
@@ -86,6 +109,7 @@ WebGLRenderingContext::WebGLRenderingContext(
       &num_config) ||
       num_config != 1) {
     state = GLCONTEXT_STATE_ERROR;
+    printf("COULD NOT CHOOSE CONFIG");
     return;
   }
 
@@ -97,6 +121,7 @@ WebGLRenderingContext::WebGLRenderingContext(
   context = eglCreateContext(DISPLAY, config, EGL_NO_CONTEXT, contextAttribs);
   if (context == EGL_NO_CONTEXT) {
     state = GLCONTEXT_STATE_ERROR;
+    printf("COULD NOT CREATE CONTEXT");
     return;
   }
 
@@ -108,12 +133,14 @@ WebGLRenderingContext::WebGLRenderingContext(
   surface = eglCreatePbufferSurface(DISPLAY, config, surfaceAttribs);
   if (surface == EGL_NO_SURFACE) {
     state = GLCONTEXT_STATE_ERROR;
+    printf("COULD NOT CREATE PBUFFER");
     return;
   }
 
   //Set active
   if (!eglMakeCurrent(DISPLAY, surface, surface, context)) {
     state = GLCONTEXT_STATE_ERROR;
+    printf("COULD NOT MAKE DISPLAY CURRENT");
     return;
   }
 
@@ -129,10 +156,13 @@ WebGLRenderingContext::WebGLRenderingContext(
   const char *extensionString = (const char*)((glGetString)(GL_EXTENSIONS));
 
   //Load required extensions
+  printf("EXTENSIONS: %s\n", extensionString);
   for(const char** rext = REQUIRED_EXTENSIONS; *rext; ++rext) {
+    printf("CHECKING: %s\n", *rext);
     if(!strstr(extensionString, *rext)) {
       dispose();
       state = GLCONTEXT_STATE_ERROR;
+      printf("REQUIRED EXT?");
       return;
     }
   }
@@ -144,6 +174,7 @@ WebGLRenderingContext::WebGLRenderingContext(
   } else if(strstr(extensionString, "GL_OES_depth24")) {
     preferredDepth = GL_DEPTH_COMPONENT24_OES;
   }
+
 }
 
 bool WebGLRenderingContext::setActive() {
