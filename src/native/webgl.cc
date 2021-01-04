@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <stdio.h>
+#include <cstdlib>
 
 #include "webgl.h"
 
@@ -9,6 +10,8 @@ bool                   WebGLRenderingContext::HAS_DISPLAY = false;
 EGLDisplay             WebGLRenderingContext::DISPLAY;
 WebGLRenderingContext* WebGLRenderingContext::ACTIVE = NULL;
 WebGLRenderingContext* WebGLRenderingContext::CONTEXT_LIST_HEAD = NULL;
+
+const bool VERBOSE = strcmp(std::getenv("VERBOSE"), "true") == 0;
 
 const char* REQUIRED_EXTENSIONS[] = {
   "GL_OES_packed_depth_stencil",
@@ -53,7 +56,7 @@ WebGLRenderingContext::WebGLRenderingContext(
   if (!HAS_DISPLAY) {
     DISPLAY = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     if (DISPLAY == EGL_NO_DISPLAY) {
-      printf("Failed to get display.");
+      if (VERBOSE) printf("(headless-gl) Failed to acquire display.");
       state = GLCONTEXT_STATE_ERROR;
       return;
     }
@@ -62,13 +65,13 @@ WebGLRenderingContext::WebGLRenderingContext(
     if (!eglInitialize(DISPLAY, NULL, NULL)) {
       switch (eglGetError()) {
         case EGL_FALSE:
-          printf("Failed to initialize. EGL_FALSE");
+          if (VERBOSE) printf("(headless-gl) Failed to initialize. EGL_FALSE");
           break;
         case EGL_BAD_DISPLAY:
-          printf("Failed to initialize. EGL_BAD_DISPLAY");
+          if (VERBOSE) printf("(headless-gl) Failed to initialize. EGL_BAD_DISPLAY");
           break;
         case EGL_NOT_INITIALIZED:
-          printf("Failed to initialize. EGL_NOT_INITIALIZED");
+          if (VERBOSE) printf("(headless-gl) Failed to initialize. EGL_NOT_INITIALIZED");
           break;
       }
 
@@ -81,9 +84,9 @@ WebGLRenderingContext::WebGLRenderingContext(
 
     char const * vendor = eglQueryString(DISPLAY, EGL_VENDOR);
     if (vendor) {
-      printf("headless-gl ?? EGL_VENDOR = %s\n", vendor);
+      if (VERBOSE) printf("(headless-gl) EGL_VENDOR = %s\n", vendor);
     } else {
-      printf("headless-gl ?? EGL_VENDOR = UNKNOWN");
+      if (VERBOSE) printf("(headless-gl) EGL_VENDOR = NULL");
     }
   }
 
@@ -109,7 +112,7 @@ WebGLRenderingContext::WebGLRenderingContext(
       &num_config) ||
       num_config != 1) {
     state = GLCONTEXT_STATE_ERROR;
-    printf("COULD NOT CHOOSE CONFIG");
+    if (VERBOSE) printf("(headless-gl) eglChooseConfig failed to produce a single config.");
     return;
   }
 
@@ -121,7 +124,7 @@ WebGLRenderingContext::WebGLRenderingContext(
   context = eglCreateContext(DISPLAY, config, EGL_NO_CONTEXT, contextAttribs);
   if (context == EGL_NO_CONTEXT) {
     state = GLCONTEXT_STATE_ERROR;
-    printf("COULD NOT CREATE CONTEXT");
+    if (VERBOSE) printf("(headless-gl) eglCreateContext failed to produce a context.");
     return;
   }
 
@@ -133,14 +136,14 @@ WebGLRenderingContext::WebGLRenderingContext(
   surface = eglCreatePbufferSurface(DISPLAY, config, surfaceAttribs);
   if (surface == EGL_NO_SURFACE) {
     state = GLCONTEXT_STATE_ERROR;
-    printf("COULD NOT CREATE PBUFFER");
+    if (VERBOSE) printf("(headless-gl) eglCreatePbufferSurface failed.");
     return;
   }
 
   //Set active
   if (!eglMakeCurrent(DISPLAY, surface, surface, context)) {
     state = GLCONTEXT_STATE_ERROR;
-    printf("COULD NOT MAKE DISPLAY CURRENT");
+    if (VERBOSE) printf("(headless-gl) eglMakeCurrent failed.");
     return;
   }
 
@@ -154,15 +157,14 @@ WebGLRenderingContext::WebGLRenderingContext(
 
   //Check extensions
   const char *extensionString = (const char*)((glGetString)(GL_EXTENSIONS));
+  if (VERBOSE) printf("(headless-gl) Supported extensions: %s\n", extensionString);
 
   //Load required extensions
-  printf("EXTENSIONS: %s\n", extensionString);
   for(const char** rext = REQUIRED_EXTENSIONS; *rext; ++rext) {
-    printf("CHECKING: %s\n", *rext);
     if(!strstr(extensionString, *rext)) {
       dispose();
       state = GLCONTEXT_STATE_ERROR;
-      printf("REQUIRED EXT?");
+      if (VERBOSE) printf("(headless-gl) Required extension is not support: %s\n", *rext);
       return;
     }
   }

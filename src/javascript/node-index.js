@@ -35,8 +35,6 @@ function createContext (width, height, options) {
   contextAttributes.premultipliedAlpha =
     contextAttributes.premultipliedAlpha && contextAttributes.alpha
  
-  console.log(contextAttributes);
-
   let ctx
   try {
     ctx = new WebGLRenderingContext(
