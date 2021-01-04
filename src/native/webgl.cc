@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <cstring>
 #include <vector>
 #include <iostream>
@@ -12,7 +11,8 @@ EGLDisplay             WebGLRenderingContext::DISPLAY;
 WebGLRenderingContext* WebGLRenderingContext::ACTIVE = NULL;
 WebGLRenderingContext* WebGLRenderingContext::CONTEXT_LIST_HEAD = NULL;
 
-const bool VERBOSE = strcmp(std::getenv("VERBOSE"), "true") == 0;
+const char* _VERBOSE = std::getenv("VERBOSE");
+bool VERBOSE = false;
 
 const char* REQUIRED_EXTENSIONS[] = {
   "GL_OES_packed_depth_stencil",
@@ -52,6 +52,10 @@ WebGLRenderingContext::WebGLRenderingContext(
     , next(NULL)
     , prev(NULL)
     , lastError(GL_NO_ERROR) {
+
+  if (_VERBOSE != NULL) {
+    VERBOSE = strcmp(_VERBOSE, "true") == 0;
+  }
 
   //Get display
   if (!HAS_DISPLAY) {
